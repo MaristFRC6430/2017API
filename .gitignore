@@ -2,3 +2,5 @@
 *.prefs
 *.snap
 *.index
+*.snap
+*.resources
