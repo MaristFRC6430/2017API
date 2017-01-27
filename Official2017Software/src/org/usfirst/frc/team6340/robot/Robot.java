@@ -1,13 +1,23 @@
 
 package org.usfirst.frc.team6340.robot;
 
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import vision.GripPipeline;
 
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team6340.robot.commands.ExampleCommand;
 import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
 
@@ -20,6 +30,8 @@ import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
  */
 public class Robot extends IterativeRobot {
 
+	Thread visionThread;
+	
 	public static final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
 	public static OI oi;
 
@@ -36,6 +48,69 @@ public class Robot extends IterativeRobot {
 		chooser.addDefault("Default Auto", new ExampleCommand());
 		// chooser.addObject("My Auto", new MyAutoCommand());
 		SmartDashboard.putData("Auto mode", chooser);
+		
+	
+		visionThread = new Thread(() -> {
+			GripPipeline pipe = new GripPipeline();
+			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+			
+			
+			camera.setResolution(640, 480);
+			camera.setFPS(10);
+			
+			CvSink cvSink = CameraServer.getInstance().getVideo();
+			
+			CvSource outputStream = CameraServer.getInstance().putVideo("Vision", 640, 480);
+			
+			Mat out = new Mat();
+			Mat mat = new Mat();
+			Mat edges = new Mat();
+			int size = 0;
+			 float avgX=0, avgY=0;
+			
+			while(!Thread.interrupted()) {
+				if(cvSink.grabFrame(out) == 0) {
+					
+					outputStream.notifyError(cvSink.getError());
+				continue;
+				}
+				
+				Imgproc.resize(out, mat, new Size(320, 240));
+				pipe.process(mat);
+				Imgproc.Canny(pipe.hsvThresholdOutput(), edges, 0, 100);
+				
+					size=0;
+					avgX=0;
+				    avgY=0;
+					
+				for(int y = 0; y<edges.rows(); y++) {
+					for(int x = 0; x<edges.cols(); x++) {
+						if(edges.get(y, x)[0]>10) 
+							{
+						size++;
+						avgX+=x;
+						avgY+=y;
+							}
+					}
+				}
+				
+				if(size>0) {
+				avgX/=size;
+				avgY/=size;
+				}
+								
+				
+				if(size>0) {
+				Imgproc.circle(out, new Point(avgX*2,avgY*2), 20, new Scalar(0,0,255), 5);
+				}
+	
+				outputStream.putFrame(out);
+				
+			}
+			
+		});
+		visionThread.setDaemon(true);
+		visionThread.start();
 	}
 
 	/**
