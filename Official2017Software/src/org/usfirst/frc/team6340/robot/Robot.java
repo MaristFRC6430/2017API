@@ -6,6 +6,10 @@ import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.RobotDrive.MotorType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -29,14 +33,26 @@ import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	RobotDrive robotDrive;
+	
+	// Channels for the wheels
+	final int kFrontLeftChannel = 2;
+	final int kRearLeftChannel = 3;
+	final int kFrontRightChannel = 1;
+	final int kRearRightChannel = 0;
 
 	Thread visionThread;
 	
 	public static final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
 	public static OI oi;
 
+	// The channel on the driver station that the joystick is connected to
+	final int kJoystickChannel = 0;
+	
 	Command autonomousCommand;
 	SendableChooser<Command> chooser = new SendableChooser<>();
+	
+	Joystick stick = new Joystick(kJoystickChannel);
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -46,6 +62,18 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		oi = new OI();
 		chooser.addDefault("Default Auto", new ExampleCommand());
+		
+		robotDrive = new RobotDrive(kFrontLeftChannel, kRearLeftChannel, kFrontRightChannel, kRearRightChannel);
+		robotDrive.setInvertedMotor(MotorType.kFrontLeft, true); // invert the
+																	// left side
+																	// motors
+		robotDrive.setInvertedMotor(MotorType.kRearLeft, true); // you may need
+																// to change or
+																// remove this
+																// to match your robot														// robot
+		robotDrive.setExpiration(0.1);
+		
+		
 		// chooser.addObject("My Auto", new MyAutoCommand());
 		SmartDashboard.putData("Auto mode", chooser);
 		
@@ -179,6 +207,13 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		Scheduler.getInstance().run();
+		robotDrive.setSafetyEnabled(true);
+		while (isOperatorControl() && isEnabled()) {
+
+			robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(), stick.getZ(), 0);
+
+			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles
+		}
 	}
 
 	/**
@@ -188,4 +223,7 @@ public class Robot extends IterativeRobot {
 	public void testPeriodic() {
 		LiveWindow.run();
 	}
+	
+
+	
 }
