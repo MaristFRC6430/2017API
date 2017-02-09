@@ -1,6 +1,7 @@
 
 package org.usfirst.frc.team6340.robot;
 
+<<<<<<< HEAD
 import org.usfirst.frc.team6340.robot.commands.ExampleCommand;
 import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
 
@@ -8,12 +9,34 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.VictorSP;
+=======
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.RobotDrive.MotorType;
+import edu.wpi.first.wpilibj.Timer;
+>>>>>>> origin/master
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import vision.GripPipeline;
 
+<<<<<<< HEAD
+=======
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
+
+>>>>>>> origin/master
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the IterativeRobot
@@ -22,9 +45,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	RobotDrive robotDrive;
+	
+	// Channels for the wheels
+	final int kFrontLeftChannel = 2;
+	final int kRearLeftChannel = 3;
+	final int kFrontRightChannel = 1;
+	final int kRearRightChannel = 0;
 
+	Thread visionThread;
+	
 	public static final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
 	public static OI oi;
+<<<<<<< HEAD
 	double targetY;
 	RobotDrive myRobot;
 	Joystick leftStick;
@@ -35,9 +68,16 @@ public class Robot extends IterativeRobot {
 	VictorSP leftBack; // PWM port 1
 	VictorSP rightBack; //PWM port 3
 	
+=======
+
+	// The channel on the driver station that the joystick is connected to
+	final static int kJoystickChannel = 0;
+>>>>>>> origin/master
 	
 	Command autonomousCommand;
 	SendableChooser<Command> chooser = new SendableChooser<>();
+	
+	static Joystick stick = new Joystick(kJoystickChannel);
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -46,12 +86,89 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		oi = new OI();
-		chooser.addDefault("Default Auto", new ExampleCommand());
+		//chooser.addDefault("Default Auto", new ExampleCommand());
+		
+		robotDrive = new RobotDrive(kFrontLeftChannel, kRearLeftChannel, kFrontRightChannel, kRearRightChannel);
+		robotDrive.setInvertedMotor(MotorType.kFrontLeft, true); // invert the
+																	// left side
+																	// motors
+		robotDrive.setInvertedMotor(MotorType.kRearLeft, true); // you may need
+																// to change or
+																// remove this
+																// to match your robot														// robot
+		robotDrive.setExpiration(0.1);
+		
+		
 		// chooser.addObject("My Auto", new MyAutoCommand());
 		SmartDashboard.putData("Auto mode", chooser);
 		
+<<<<<<< HEAD
 		mainStick = new Joystick(0);
 		
+=======
+	
+		visionThread = new Thread(() -> {
+			GripPipeline pipe = new GripPipeline();
+			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+			
+			
+			camera.setResolution(640, 480);
+			camera.setFPS(10);
+			
+			CvSink cvSink = CameraServer.getInstance().getVideo();
+			
+			CvSource outputStream = CameraServer.getInstance().putVideo("Vision", 640, 480);
+			
+			Mat out = new Mat();
+			Mat mat = new Mat();
+			Mat edges = new Mat();
+			int size = 0;
+			 float avgX=0, avgY=0;
+			
+			while(!Thread.interrupted()) {
+				if(cvSink.grabFrame(out) == 0) {
+					
+					outputStream.notifyError(cvSink.getError());
+				continue;
+				}
+				
+				Imgproc.resize(out, mat, new Size(320, 240));
+				pipe.process(mat);
+				Imgproc.Canny(pipe.hsvThresholdOutput(), edges, 0, 100);
+				
+					size=0;
+					avgX=0;
+				    avgY=0;
+					
+				for(int y = 0; y<edges.rows(); y++) {
+					for(int x = 0; x<edges.cols(); x++) {
+						if(edges.get(y, x)[0]>10) 
+							{
+						size++;
+						avgX+=x;
+						avgY+=y;
+							}
+					}
+				}
+				
+				if(size>0) {
+				avgX/=size;
+				avgY/=size;
+				}
+								
+				
+				if(size>0) {
+				Imgproc.circle(out, new Point(avgX*2,avgY*2), 20, new Scalar(0,0,255), 5);
+				}
+	
+				outputStream.putFrame(out);
+				
+			}
+			
+		});
+		visionThread.setDaemon(true);
+		visionThread.start();
+>>>>>>> origin/master
 	}
 
 	/**
@@ -119,6 +236,7 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
+<<<<<<< HEAD
 		targetY = mainStick.getY();
 		
 		double power = (Math.sin(Math.PI * (mainStick.getY() - 0.5))+1)/2;
@@ -130,6 +248,16 @@ public class Robot extends IterativeRobot {
 		leftBack.set(power - (mainStick.getX()/2));
 		rightFront.set(power + (mainStick.getX()/2));
 		rightBack.set(power + (mainStick.getX()/2));
+=======
+		Scheduler.getInstance().run();
+		robotDrive.setSafetyEnabled(true);
+		while (isOperatorControl() && isEnabled()) {
+
+			robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(), stick.getZ(), 0);
+
+			Timer.delay(0.005); // wait 5ms to avoid hogging CPU cycles
+		}
+>>>>>>> origin/master
 	}
 
 	/**
@@ -139,4 +267,7 @@ public class Robot extends IterativeRobot {
 	public void testPeriodic() {
 		LiveWindow.run();
 	}
+	
+
+	
 }

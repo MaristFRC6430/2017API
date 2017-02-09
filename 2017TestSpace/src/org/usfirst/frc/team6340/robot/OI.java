@@ -1,9 +1,8 @@
 package org.usfirst.frc.team6340.robot;
 
 import edu.wpi.first.wpilibj.buttons.Button;
-import edu.wpi.first.wpilibj.buttons.JoystickButton;
 
-
+import org.usfirst.frc.team6340.robot.commands.ExampleCommand;
 
 /**
  * This class is the glue that binds the controls on the physical operator
@@ -17,13 +16,6 @@ public class OI {
 	// number it is.
 	// Joystick stick = new Joystick(port);
 	// Button button = new JoystickButton(stick, buttonNumber);
-	
-	static Button ballTriggerButton = new JoystickButton(Robot.stick, 0);
-	static Button cameraSwitchButton = new JoystickButton(Robot.stick, 1);
-	static Button ballReleaseButton = new JoystickButton(Robot.stick, 2);
-	static Button netReturnButton = new JoystickButton(Robot.stick, 3);
-	static Button winchInButton = new JoystickButton(Robot.stick, 4);
-	static Button winchOutButton = new JoystickButton(Robot.stick, 5);
 
 	// There are a few additional built in buttons you can use. Additionally,
 	// by subclassing Button you can create custom triggers and bind those to

@@ -6,3 +6,5 @@
 .metadata/.plugins/org.eclipse.core.resources/.root/.indexes/history.version
 *.index
 *.resources
+*.snap
+.metadata/.plugins/org.eclipse.core.resources/.root/.markers.snap
