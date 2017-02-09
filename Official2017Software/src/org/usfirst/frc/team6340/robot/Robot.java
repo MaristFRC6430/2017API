@@ -46,12 +46,12 @@ public class Robot extends IterativeRobot {
 	public static OI oi;
 
 	// The channel on the driver station that the joystick is connected to
-	final int kJoystickChannel = 0;
+	final static int kJoystickChannel = 0;
 	
 	Command autonomousCommand;
 	SendableChooser<Command> chooser = new SendableChooser<>();
 	
-	Joystick stick = new Joystick(kJoystickChannel);
+	static Joystick stick = new Joystick(kJoystickChannel);
 
 	/**
 	 * This function is run when the robot is first started up and should be
