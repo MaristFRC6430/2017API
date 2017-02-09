@@ -1,15 +1,18 @@
 
 package org.usfirst.frc.team6340.robot;
 
+import org.usfirst.frc.team6340.robot.commands.ExampleCommand;
+import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
+
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import org.usfirst.frc.team6340.robot.commands.ExampleCommand;
-import org.usfirst.frc.team6340.robot.subsystems.ExampleSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -22,7 +25,17 @@ public class Robot extends IterativeRobot {
 
 	public static final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
 	public static OI oi;
-
+	double targetY;
+	RobotDrive myRobot;
+	Joystick leftStick;
+	Joystick rightStick;
+	Joystick mainStick;
+	VictorSP rightFront; //PWM port 2
+	VictorSP leftFront; // PWM port 0
+	VictorSP leftBack; // PWM port 1
+	VictorSP rightBack; //PWM port 3
+	
+	
 	Command autonomousCommand;
 	SendableChooser<Command> chooser = new SendableChooser<>();
 
@@ -37,7 +50,8 @@ public class Robot extends IterativeRobot {
 		// chooser.addObject("My Auto", new MyAutoCommand());
 		SmartDashboard.putData("Auto mode", chooser);
 		
-		boolean potato = true;
+		mainStick = new Joystick(0);
+		
 	}
 
 	/**
@@ -105,7 +119,17 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		Scheduler.getInstance().run();
+		targetY = mainStick.getY();
+		
+		double power = (Math.sin(Math.PI * (mainStick.getY() - 0.5))+1)/2;
+		if (mainStick.getY() < 0){
+			power = power * -1;
+		}
+		
+		leftFront.set(power - (mainStick.getX()/2));
+		leftBack.set(power - (mainStick.getX()/2));
+		rightFront.set(power + (mainStick.getX()/2));
+		rightBack.set(power + (mainStick.getX()/2));
 	}
 
 	/**
